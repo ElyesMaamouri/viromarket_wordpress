@@ -1,0 +1,174 @@
+<?php
+/**
+ * Intégration et personnalisation WooCommerce
+ * 
+ * @package ViroMarket
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Désactiver les styles WooCommerce par défaut
+ */
+add_filter('woocommerce_enqueue_styles', '__return_empty_array');
+
+/**
+ * Modifier le nombre de produits par page
+ */
+function viromarket_products_per_page() {
+    return 12; // Multiple of 3
+}
+add_filter('loop_shop_per_page', 'viromarket_products_per_page', 20);
+
+/**
+ * Modifier le nombre de colonnes de produits
+ */
+function viromarket_loop_columns() {
+    return 3; // 3 colonnes sur desktop per user request
+}
+add_filter('loop_shop_columns', 'viromarket_loop_columns');
+
+/**
+ * Modifier les colonnes de produits liés
+ */
+function viromarket_related_products_args($args) {
+    $args['posts_per_page'] = 4;
+    $args['columns'] = 4;
+    return $args;
+}
+add_filter('woocommerce_output_related_products_args', 'viromarket_related_products_args');
+
+/**
+ * Désactiver les wrappers WooCommerce par défaut
+ * Notre template archive-product.php gère la structure complète
+ */
+remove_action('woocommerce_before_main_content', 'woocommerce_output_content_wrapper', 10);
+remove_action('woocommerce_after_main_content', 'woocommerce_output_content_wrapper_end', 10);
+remove_action('woocommerce_sidebar', 'woocommerce_get_sidebar', 10);
+remove_action('woocommerce_after_shop_loop', 'woocommerce_pagination', 10);
+add_action('woocommerce_after_shop_loop', 'viromarket_pagination', 10);
+
+/**
+ * Personnaliser le breadcrumb WooCommerce pour correspondre au design du template
+ */
+function viromarket_woocommerce_breadcrumbs() {
+    return array(
+        'delimiter'   => '',
+        'wrap_before' => '<ol>',
+        'wrap_after'  => '</ol>',
+        'before'      => '<li>',
+        'after'       => '</li>',
+        'home'        => _x('Home', 'breadcrumb', 'viromarket'),
+    );
+}
+add_filter('woocommerce_breadcrumb_defaults', 'viromarket_woocommerce_breadcrumbs');
+
+/**
+ * Ajouter des classes personnalisées aux produits
+ */
+function viromarket_product_classes($classes, $product) {
+    if ($product->is_on_sale()) {
+        $classes[] = 'product-on-sale';
+    }
+    
+    if (!$product->is_in_stock()) {
+        $classes[] = 'product-out-of-stock';
+    }
+    
+    return $classes;
+}
+add_filter('woocommerce_post_class', 'viromarket_product_classes', 10, 2);
+
+/**
+ * Modifier le texte "Ajouter au panier"
+ */
+function viromarket_add_to_cart_text($text, $product) {
+    if ($product->is_type('simple')) {
+        return __('Add to cart', 'viromarket');
+    }
+    return $text;
+}
+add_filter('woocommerce_product_add_to_cart_text', 'viromarket_add_to_cart_text', 10, 2);
+add_filter('woocommerce_product_single_add_to_cart_text', 'viromarket_add_to_cart_text', 10, 2);
+
+/**
+ * Support du panier AJAX
+ */
+function viromarket_ajax_add_to_cart_handler() {
+    WC_AJAX::get_refreshed_fragments();
+}
+add_action('wp_ajax_viromarket_add_to_cart', 'viromarket_ajax_add_to_cart_handler');
+add_action('wp_ajax_nopriv_viromarket_add_to_cart', 'viromarket_ajax_add_to_cart_handler');
+
+/**
+ * Support multiple categories and attributes in the URL
+ */
+function viromarket_handle_sidebar_filters( $query ) {
+    if ( is_admin() || ! $query->is_main_query() ) {
+        return;
+    }
+
+    if ( is_shop() || is_product_category() || is_product_taxonomy() ) {
+        $tax_query = (array) $query->get( 'tax_query' );
+
+        // 1. Handle Multiple Categories
+        $product_cat = isset( $_GET['product_cat'] ) ? sanitize_text_field( $_GET['product_cat'] ) : '';
+        if ( ! empty( $product_cat ) ) {
+            $categories = explode( ',', $product_cat );
+            $tax_query[] = array(
+                'taxonomy' => 'product_cat',
+                'field'    => 'slug',
+                'terms'    => $categories,
+                'operator' => 'IN',
+            );
+            $query->set( 'product_cat', '' ); // Prevent conflict
+        }
+
+        // 2. Handle Multiple Brands
+        $brands = isset( $_GET['filter_brand'] ) ? sanitize_text_field( $_GET['filter_brand'] ) : '';
+        if ( ! empty( $brands ) ) {
+            $brand_list = explode( ',', $brands );
+            $tax_query[] = array(
+                'taxonomy' => 'product_brand',
+                'field'    => 'slug',
+                'terms'    => $brand_list,
+                'operator' => 'IN',
+            );
+        }
+
+        // 3. Handle Multiple Colors (Attribute)
+        $attribute_taxonomies = wc_get_attribute_taxonomies();
+        $color_tax = '';
+        foreach ( $attribute_taxonomies as $tax ) {
+            if ( $tax->attribute_name == 'color' || $tax->attribute_name == 'colour' ) {
+                $color_tax = wc_attribute_taxonomy_name( $tax->attribute_name );
+                break;
+            }
+        }
+
+        $colors = isset( $_GET['filter_color'] ) ? sanitize_text_field( $_GET['filter_color'] ) : '';
+        if ( ! empty( $colors ) && ! empty( $color_tax ) ) {
+            $color_list = explode( ',', $colors );
+            $tax_query[] = array(
+                'taxonomy' => $color_tax,
+                'field'    => 'slug',
+                'terms'    => $color_list,
+                'operator' => 'IN',
+            );
+        }
+
+        $query->set( 'tax_query', $tax_query );
+    }
+}
+add_action( 'pre_get_posts', 'viromarket_handle_sidebar_filters' );
+
+/**
+ * Mettre à jour le compteur du panier
+ */
+function viromarket_cart_count_fragments($fragments) {
+    $fragments['span.cart-count'] = '<span class="cart-count">' . WC()->cart->get_cart_contents_count() . '</span>';
+    return $fragments;
+}
+add_filter('woocommerce_add_to_cart_fragments', 'viromarket_cart_count_fragments');

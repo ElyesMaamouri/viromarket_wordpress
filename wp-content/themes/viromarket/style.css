@@ -1,0 +1,30 @@
+/*
+Theme Name: ViroMarket
+Theme URI: https://viromarket.com
+Author: ViroMarket Team
+Author URI: https://viromarket.com
+Description: Thème e-commerce moderne et professionnel avec support multi-langue (Anglais, Français, Arabe) et intégration WooCommerce complète. Design responsive avec widgets Elementor personnalisés.
+Version: 1.0.0
+Requires at least: 6.0
+Tested up to: 6.4
+Requires PHP: 7.4
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: viromarket
+Tags: e-commerce, woocommerce, rtl-language-support, translation-ready, custom-colors, custom-menu, featured-images, threaded-comments, elementor
+*/
+
+/*--------------------------------------------------------------
+>>> TABLE OF CONTENTS:
+----------------------------------------------------------------
+# Variables CSS
+# Reset & Base Styles
+# Typography
+# Navigation
+# Layout
+# Components
+# WooCommerce
+# Responsive
+--------------------------------------------------------------*/
+
+/* Les styles principaux sont chargés depuis assets/css/styles.css */
