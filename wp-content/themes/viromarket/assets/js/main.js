@@ -61,7 +61,59 @@
             }
         });
 
-        // View Toggles (Grid / List)
+        // Custom Dropdown UI Enhancement
+        function initCustomSelects() {
+            $('.select-wrapper').each(function () {
+                const $wrapper = $(this);
+                const $select = $wrapper.find('select');
+                if (!$select.length || $wrapper.hasClass('custom-select-init')) return;
+
+                $wrapper.addClass('custom-select-init');
+                const $current = $('<div class="select-selected"></div>');
+                const $options = $('<div class="select-items select-hide"></div>');
+
+                // Set initial text
+                $current.text($select.find('option:selected').text());
+                $wrapper.append($current);
+
+                // Build options list
+                $select.find('option').each(function () {
+                    const $opt = $(this);
+                    const $div = $('<div></div>').text($opt.text());
+                    if ($opt.is(':selected')) $div.addClass('same-as-selected');
+
+                    $div.on('click', function (e) {
+                        e.stopPropagation();
+                        $select.val($opt.val()).trigger('change');
+                        $current.text($opt.text());
+                        $div.siblings().removeClass('same-as-selected');
+                        $div.addClass('same-as-selected');
+                        $options.addClass('select-hide');
+                        $wrapper.removeClass('select-arrow-active');
+                    });
+                    $options.append($div);
+                });
+
+                $wrapper.append($options);
+
+                $current.on('click', function (e) {
+                    e.stopPropagation();
+                    $('.select-items').not($options).addClass('select-hide');
+                    $('.select-wrapper').not($wrapper).removeClass('select-arrow-active');
+                    $options.toggleClass('select-hide');
+                    $wrapper.toggleClass('select-arrow-active');
+                });
+            });
+
+            $(document).on('click', function () {
+                $('.select-items').addClass('select-hide');
+                $('.select-wrapper').removeClass('select-arrow-active');
+            });
+        }
+
+        initCustomSelects();
+
+        // Already exists: View Toggles (Grid / List)
         const $productGrid = $('#productGrid');
         const $viewBtns = $('.view-btn');
 

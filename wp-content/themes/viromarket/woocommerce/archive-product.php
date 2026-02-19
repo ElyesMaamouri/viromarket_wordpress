@@ -86,6 +86,7 @@ $max_price_slider = ($max_price_db > 0) ? $max_price_db : 1000;
                             <label class="filter-item">
                                 <input type="checkbox" class="category-filter-checkbox" name="category" value="<?php echo esc_attr( $category->slug ); ?>" <?php checked( $is_active ); ?>>
                                 <span class="item-label"><?php echo esc_html( $category->name ); ?></span>
+                                <span class="count">(<?php echo esc_html( $category->count ); ?>)</span>
                             </label>
                         <?php endforeach; ?>
 
@@ -97,6 +98,7 @@ $max_price_slider = ($max_price_db > 0) ? $max_price_db : 1000;
                                     <label class="filter-item">
                                         <input type="checkbox" class="category-filter-checkbox" name="category" value="<?php echo esc_attr( $category->slug ); ?>" <?php checked( $is_active ); ?>>
                                         <span class="item-label"><?php echo esc_html( $category->name ); ?></span>
+                                        <span class="count">(<?php echo esc_html( $category->count ); ?>)</span>
                                     </label>
                                 <?php endforeach; ?>
                             </div>
@@ -204,6 +206,7 @@ $max_price_slider = ($max_price_db > 0) ? $max_price_db : 1000;
                         <label class="filter-item">
                             <input type="checkbox" class="brand-filter-checkbox" name="brand_filter" value="<?php echo esc_attr( $brand->slug ); ?>" <?php checked( $is_active ); ?>>
                             <span class="item-label"><?php echo esc_html( $brand->name ); ?></span>
+                            <span class="count">(<?php echo esc_html( $brand->count ); ?>)</span>
                         </label>
                         <?php endforeach; ?>
                     </div>
@@ -254,6 +257,7 @@ $max_price_slider = ($max_price_db > 0) ? $max_price_db : 1000;
                         <label class="filter-item">
                             <input type="checkbox" class="color-filter-checkbox" name="color_filter" value="<?php echo esc_attr( $color->slug ); ?>" <?php checked( $is_active ); ?>>
                             <span class="item-label"><?php echo esc_html( $color->name ); ?></span>
+                            <span class="count">(<?php echo esc_html( $color->count ); ?>)</span>
                         </label>
                         <?php endforeach; ?>
                     </div>

@@ -110,6 +110,14 @@ function viromarket_scripts() {
         VIROMARKET_VERSION
     );
     
+    // Pagination styles
+    wp_enqueue_style(
+        'viromarket-pagination',
+        VIROMARKET_THEME_URI . '/assets/css/pagination.css',
+        array('viromarket-main'),
+        VIROMARKET_VERSION
+    );
+    
     // Lucide Icons
     wp_enqueue_script(
         'lucide-icons',

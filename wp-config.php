@@ -88,6 +88,8 @@ $table_prefix = 'wp_dgbi';
 define( 'WP_DEBUG', false );
 
 /* Add any custom values between this line and the "stop editing" line. */
+define( 'WP_HOME', 'http://localhost/ecomshop' );
+define( 'WP_SITEURL', 'http://localhost/ecomshop' );
 
 
 
