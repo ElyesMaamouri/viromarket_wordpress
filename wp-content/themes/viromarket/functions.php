@@ -167,12 +167,13 @@ function viromarket_scripts() {
     
     // Localisation JavaScript
     wp_localize_script('viromarket-main', 'viromarketData', array(
-        'ajaxUrl' => admin_url('admin-ajax.php'),
-        'nonce'   => wp_create_nonce('viromarket-nonce'),
-        'isRTL'   => is_rtl(),
-        'lang'    => get_locale(),
-        'viewAll' => __( 'View All', 'viromarket' ),
-        'viewLess'=> __( 'View Less', 'viromarket' ),
+        'ajaxUrl'   => admin_url('admin-ajax.php'),
+        'nonce'     => wp_create_nonce('viromarket-nonce'),
+        'cartNonce' => wp_create_nonce('viromarket_cart_nonce'),
+        'isRTL'     => is_rtl(),
+        'lang'      => get_locale(),
+        'viewAll'   => __( 'View All', 'viromarket' ),
+        'viewLess'  => __( 'View Less', 'viromarket' ),
     ));
     
     // Support des commentaires imbriqués

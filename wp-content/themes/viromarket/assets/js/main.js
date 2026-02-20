@@ -244,8 +244,10 @@
         });
 
         // 2. Sync Cart Count in Navbar after standard WooCommerce events
-        $(document.body).on('added_to_cart removed_from_cart updated_cart_totals updated_wc_div', function () {
-            console.log('Cart updated: refreshing Navbar');
+        // Note: added_to_cart and removed_from_cart are usually handled by WC core or our specific handlers.
+        // We consolidate common refreshed actions here.
+        $(document.body).on('updated_cart_totals updated_wc_div', function () {
+            console.log('ViroMarket: Cart totals/div updated, refreshing fragments');
             $(document.body).trigger('wc_fragment_refresh');
             autoHideNotices();
         });
@@ -352,24 +354,26 @@
 
         // Function to update cart via AJAX
         function updateCartForm($form) {
-            const $container = $('.cart-page-section');
+            const $container = $('#viromarket-cart-section-container');
             if (!$container.length) return;
 
-            $container.css({ 'opacity': '0.5', 'pointer-events': 'none' });
+            $container.addClass('loading-active');
 
             $.ajax({
                 type: 'POST',
                 url: $form.attr('action') || window.location.href,
                 data: $form.serialize() + '&update_cart=1',
+                cache: false,
                 dataType: 'html',
                 success: function (response) {
-                    const $resp = $('<div>').html(response);
-                    const $newContent = $resp.find('.cart-page-section');
+                    const $html = $($.parseHTML(response));
+                    const $newContent = $html.find('#viromarket-cart-section-container').addBack('#viromarket-cart-section-container').first();
 
                     if ($newContent.length) {
-                        $('.cart-page-section').replaceWith($newContent);
+                        $('#viromarket-cart-section-container').replaceWith($newContent);
                         $(document.body).trigger('wc_fragment_refresh');
                         $(document.body).trigger('updated_wc_div');
+                        $(document.body).trigger('updated_cart_totals');
                         createViroIcons();
                         autoHideNotices();
                     } else {
@@ -380,55 +384,75 @@
                     window.location.reload();
                 },
                 complete: function () {
-                    $('.cart-page-section').css({ 'opacity': '', 'pointer-events': '' });
+                    $('#viromarket-cart-section-container').removeClass('loading-active');
                 }
             });
         }
 
-        // 5. AJAX Cart Item Removal
-        $(document.on ? document : $(document)).on('click', '.remove-cart-item, .remove-item-cart, .woocommerce-cart-form .remove, .mini_cart_item .remove', function (e) {
+        // 5. AJAX Cart Item Removal — uses native WC remove URL + fetch() with session cookies
+        $(document).on('click', '.remove-cart-item', function (e) {
             e.preventDefault();
-            const $link = $(this);
-            const removeUrl = $link.attr('href');
-            if (!removeUrl || removeUrl === '#' || removeUrl === 'javascript:void(0)') return;
 
-            const $row = $link.closest('.cart_item, .cart-item-mini, .mini_cart_item');
-            const $container = $('.cart-page-section');
+            const $btn = $(this);
+            const removeUrl = $btn.attr('href');
+            if (!removeUrl || removeUrl === '#') return;
 
-            $row.css({ 'opacity': '0.3', 'pointer-events': 'none' });
-            if ($container.length) $container.css('pointer-events', 'none');
+            const $row = $btn.closest('.cart_item, .cart-item-card');
+            const $container = $('#viromarket-cart-section-container');
 
-            $.ajax({
-                type: 'GET',
-                url: removeUrl,
-                dataType: 'html',
-                success: function (response) {
-                    const $resp = $('<div>').html(response);
+            // Visual feedback — dim the row being removed
+            $row.css({ opacity: '0.3', 'pointer-events': 'none' });
+            if ($container.length) $container.addClass('loading-active');
 
-                    // Update Page Cart
-                    const $newMainCart = $resp.find('.cart-page-section');
-                    if ($newMainCart.length && $('.cart-page-section').length) {
-                        $('.cart-page-section').replaceWith($newMainCart);
-                    } else if ($('.cart-page-section').length) {
-                        // If we are on cart page but response doesn't have the section, it might be empty now
+            // fetch() with credentials ensures the WC session cookie is sent.
+            // cache: 'no-store' avoids getting a stale version of the cart page.
+            fetch(removeUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' })
+                .then(function (res) { return res.text(); })
+                .then(function (html) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContainer = doc.querySelector('#viromarket-cart-section-container');
+
+                    if (newContainer && $container.length) {
+                        const newItemCount = newContainer.querySelectorAll('.cart_item, .cart-item-card').length;
+                        console.log('ViroMarket: Response parsed. Items found in new container:', newItemCount);
+
+                        // Update the container content.
+                        $container.html(newContainer.innerHTML);
+
+                        // Update page title/subtitle if found in the response
+                        const newTitle = doc.querySelector('.cart-title');
+                        const newSubtitle = doc.querySelector('.cart-subtitle');
+                        if (newTitle) $('.cart-title').html(newTitle.innerHTML);
+                        if (newSubtitle) $('.cart-subtitle').html(newSubtitle.innerHTML);
+
+                        console.log('ViroMarket: Container content updated from response.');
+                    } else {
+                        console.warn('ViroMarket: Could not find cart container in response, reloading page.');
                         window.location.reload();
+                        return;
                     }
 
-                    // Force fragment refresh (updates mini-cart and counts)
+                    // Sync header cart count from the new HTML (fallback if fragments lag)
+                    const newCount = doc.querySelector('.cart-count');
+                    if (newCount) {
+                        $('.cart-count').text(newCount.textContent.trim());
+                    }
+
+                    // Trigger WC fragments refresh and custom events
                     $(document.body).trigger('wc_fragment_refresh');
                     $(document.body).trigger('removed_from_cart');
 
                     createViroIcons();
                     autoHideNotices();
-                },
-                error: function () {
+                })
+                .catch(function (err) {
+                    console.error('ViroMarket: Fetch error:', err);
                     window.location.reload();
-                },
-                complete: function () {
-                    $('.cart_item, .cart-item-mini, .mini_cart_item').css({ 'opacity': '', 'pointer-events': '' });
-                    $('.cart-page-section').css('pointer-events', '');
-                }
-            });
+                })
+                .finally(function () {
+                    $container.removeClass('loading-active');
+                });
         });
 
         // 6. Handle manual "Update Cart" button
@@ -446,12 +470,39 @@
             console.log('ViroMarket: Mini-cart and UI fragments updated');
         });
 
-        // 8. Fix: Ensure fragments are loaded on first visit if they look empty but might not be
+        // 8. Fix: Ensure fragments and main cart are loaded on first visit if they look empty
+        const $container = $('#viromarket-cart-section-container');
         const $cartContent = $('.widget_shopping_cart_content');
-        if ($('.cart-count').first().text().trim() === '0' || ($cartContent.length && $.trim($cartContent.html()) === '')) {
+        const isCartPage = $container.length > 0;
+        const looksEmpty = $('.cart-count').first().text().trim() === '0' || ($cartContent.length && $.trim($cartContent.html()) === '');
+        const pageShowsEmpty = isCartPage && $('.cart-empty-state').length > 0;
+
+        if (looksEmpty || pageShowsEmpty) {
+            console.log('ViroMarket: Cart looks empty or shows empty state. Double-checking with server...');
             setTimeout(function () {
                 $(document.body).trigger('wc_fragment_refresh');
-            }, 600);
+
+                // If on cart page and it shows empty message, double check with a quick fresh fetch
+                if (pageShowsEmpty) {
+                    fetch(window.location.href, { cache: 'no-store' })
+                        .then(res => res.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const $newContent = $(doc).find('#viromarket-cart-section-container');
+
+                            if ($newContent.length && $newContent.find('.woocommerce-cart-form').length) {
+                                console.log('ViroMarket: Stale empty cart detected! Refreshing with real content.');
+                                $container.html($newContent.html());
+                                createViroIcons();
+                                $(document.body).trigger('wc_fragment_refresh');
+                            } else {
+                                console.log('ViroMarket: Cart is indeed empty according to server.');
+                            }
+                        })
+                        .catch(err => console.error('ViroMarket: Check error:', err));
+                }
+            }, 800);
         }
 
         // 9. Close any overlay when clicking the close button specifically

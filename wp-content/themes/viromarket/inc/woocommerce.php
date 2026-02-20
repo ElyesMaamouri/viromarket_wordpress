@@ -10,6 +10,63 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Fix Cart Empty on Initial Load & Session Sync
+ */
+add_action('init', function() {
+    if ( ! is_admin() && class_exists('WooCommerce') ) {
+        if ( ! WC()->session->has_session() ) {
+            WC()->session->set_customer_session_cookie( true );
+        }
+    }
+});
+
+add_action('template_redirect', function() {
+    if ( (is_cart() || is_checkout()) && class_exists('WooCommerce') ) {
+        // Force calculation to ensure is_empty() refers to fresh data
+        WC()->cart->calculate_totals();
+
+        // Prevent caching of these pages
+        if (!is_admin()) {
+            nocache_headers();
+        }
+    }
+}, 10);
+
+/**
+ * Force WooCommerce to use our custom cart template from the theme
+ */
+add_filter('woocommerce_locate_template', function($template, $template_name, $template_path) {
+    if ($template_name === 'cart/cart.php') {
+        $theme_template = VIROMARKET_THEME_DIR . '/woocommerce/cart/cart.php';
+        if (file_exists($theme_template)) {
+            return $theme_template;
+        }
+    }
+    return $template;
+}, 20, 3);
+
+/**
+ * Force the use of the classic [woocommerce_cart] shortcode.
+ * This ensures our custom templates are used even if the page was created with blocks.
+ */
+add_filter('the_content', function($content) {
+    if ( is_cart() || strpos($_SERVER['REQUEST_URI'], '/cart/') !== false ) {
+        return do_shortcode('[woocommerce_cart]');
+    }
+    return $content;
+}, 9999);
+
+/**
+ * Ensure CART template is detected properly
+ */
+add_action('template_redirect', function() {
+    if ( is_cart() || (is_page() && get_the_ID() == 8) ) {
+        // Enforce the use of classic cart even if block meta is present
+        add_filter('woocommerce_is_checkout', '__return_false');
+    }
+}, 5);
+
+/**
  * Désactiver les styles WooCommerce par défaut
  */
 add_filter('woocommerce_enqueue_styles', '__return_empty_array');
@@ -159,6 +216,11 @@ add_action( 'pre_get_posts', 'viromarket_handle_sidebar_filters' );
  * Mettre à jour le compteur du panier via AJAX
  */
 function viromarket_cart_count_fragments($fragments) {
+    if ( ! class_exists( 'WooCommerce' ) || ! WC()->cart ) return $fragments;
+
+    // Ensure cart is loaded and totaled
+    WC()->cart->calculate_totals();
+
     // Top bar cart fragment - Include the ID wrapper
     ob_start();
     ?>
@@ -195,13 +257,8 @@ add_filter('woocommerce_add_to_cart_fragments', 'viromarket_cart_count_fragments
 
 /**
  * Force fragment refresh on every page load to ensure accuracy
+ * (Handled in main.js for better control)
  */
 add_action('wp_footer', function() {
-    ?>
-    <script type="text/javascript">
-        jQuery(function($) {
-            $(document.body).trigger('wc_fragment_refresh');
-        });
-    </script>
-    <?php
+    // Silence is golden - logic moved to JS
 }, 99);

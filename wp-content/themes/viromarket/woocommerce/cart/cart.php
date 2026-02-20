@@ -8,8 +8,12 @@
 
 defined('ABSPATH') || exit;
 ?>
-<!-- VIROMARKET_CART_TEMPLATE_LOADED -->
+<!-- VIROMARKET_CART_TEMPLATE_LOADED_SUCCESSFULLY -->
 <?php
+// Force calculation to be sure we have the latest state during AJAX
+if ( class_exists( 'WooCommerce' ) && WC()->cart ) {
+    WC()->cart->calculate_totals();
+}
 $cart_count = WC()->cart->get_cart_contents_count();
 $cart_items = WC()->cart->get_cart();
 ?>
@@ -28,8 +32,9 @@ $cart_items = WC()->cart->get_cart();
 </nav>
 
 <main id="primary">
-    <section class="cart-page-section">
-        <div class="container-website">
+    <div id="viromarket-cart-section-container">
+        <section class="cart-page-section">
+            <div class="container-website">
 
             <!-- Section Header -->
             <header class="cart-header">
@@ -152,11 +157,12 @@ $cart_items = WC()->cart->get_cart();
                                             <div class="cart-col col-action">
                                                 <?php
                                                 echo sprintf(
-                                                    '<a href="%s" class="remove remove-cart-item" aria-label="%s" data-product_id="%s" data-cart_item_key="%s">%s</a>',
+                                                    '<a href="%s" class="remove remove-cart-item" aria-label="%s" data-product_id="%s" data-cart_item_key="%s" data-nonce="%s">%s</a>',
                                                     esc_url(wc_get_cart_remove_url($cart_item_key)),
                                                     esc_attr__('Remove this item', 'woocommerce'),
                                                     esc_attr($_product->get_id()),
                                                     esc_attr($cart_item_key),
+                                                    wp_create_nonce('viromarket_cart_nonce'),
                                                     viromarket_icon('trash-2', 18)
                                                 );
                                                 ?>
@@ -236,6 +242,7 @@ $cart_items = WC()->cart->get_cart();
 
         </div>
     </section>
+</div>
 </main>
 
 <?php do_action('woocommerce_after_cart'); ?>
