@@ -283,7 +283,32 @@
             }
         }
 
+        // 3. Add to Cart Button Loading & View Cart Auto-hide
+        $(document.body).on('adding_to_cart', function (e, $btn) {
+            $btn.addClass('loading');
+        });
 
+        $(document.body).on('added_to_cart', function (e, fragments, cart_hash, $btn) {
+            if ($btn) {
+                $btn.removeClass('loading');
+
+                // Find the just added "View cart" link
+                setTimeout(function () {
+                    const $container = $btn.closest('.product-actions, .product-details-container');
+                    const $viewCart = $container.find('.added_to_cart.wc-forward');
+
+                    if ($viewCart.length) {
+                        // After 5 seconds, fade out and remove
+                        setTimeout(function () {
+                            $viewCart.addClass('fade-out');
+                            setTimeout(function () {
+                                $viewCart.remove();
+                            }, 450);
+                        }, 5000);
+                    }
+                }, 50);
+            }
+        });
         // 3. AJAX Add to Cart for Single Product Page
         $(document).on('submit', 'form.cart', function (e) {
             if ($(this).closest('.product-details-container').length) {
