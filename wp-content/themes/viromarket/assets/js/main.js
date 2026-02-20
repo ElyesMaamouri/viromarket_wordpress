@@ -4,16 +4,12 @@
 (function ($) {
     "use strict";
 
-    // Debugging
-    console.log('ViroMarket Scripts Starting...');
-
     // Function to safely initialize Lucide icons
     function createViroIcons() {
         if (typeof lucide !== 'undefined') {
-            console.log('Lucide: Creating icons');
             lucide.createIcons();
         } else {
-            console.log('Lucide: Waiting for library...');
+
             setTimeout(createViroIcons, 250);
         }
     }
@@ -247,7 +243,7 @@
         // Note: added_to_cart and removed_from_cart are usually handled by WC core or our specific handlers.
         // We consolidate common refreshed actions here.
         $(document.body).on('updated_cart_totals updated_wc_div', function () {
-            console.log('ViroMarket: Cart totals/div updated, refreshing fragments');
+
             $(document.body).trigger('wc_fragment_refresh');
             autoHideNotices();
         });
@@ -266,7 +262,7 @@
                 clearTimeout(blocksRefreshTimer);
                 blocksRefreshTimer = setTimeout(function () {
                     $(document.body).trigger('wc_fragment_refresh');
-                    console.log('WC Blocks: synced nav after cart change');
+
                 }, 1000);
             }
 
@@ -414,9 +410,6 @@
                     const newContainer = doc.querySelector('#viromarket-cart-section-container');
 
                     if (newContainer && $container.length) {
-                        const newItemCount = newContainer.querySelectorAll('.cart_item, .cart-item-card').length;
-                        console.log('ViroMarket: Response parsed. Items found in new container:', newItemCount);
-
                         // Update the container content.
                         $container.html(newContainer.innerHTML);
 
@@ -426,9 +419,8 @@
                         if (newTitle) $('.cart-title').html(newTitle.innerHTML);
                         if (newSubtitle) $('.cart-subtitle').html(newSubtitle.innerHTML);
 
-                        console.log('ViroMarket: Container content updated from response.');
+
                     } else {
-                        console.warn('ViroMarket: Could not find cart container in response, reloading page.');
                         window.location.reload();
                         return;
                     }
@@ -467,7 +459,7 @@
         // 7. Explicitly handle fragment updates to avoid icons breaking or stale data
         $(document.body).on('wc_fragments_refreshed wc_fragments_loaded added_to_cart removed_from_cart', function () {
             createViroIcons();
-            console.log('ViroMarket: Mini-cart and UI fragments updated');
+
         });
 
         // 8. Fix: Ensure fragments and main cart are loaded on first visit if they look empty
@@ -478,7 +470,7 @@
         const pageShowsEmpty = isCartPage && $('.cart-empty-state').length > 0;
 
         if (looksEmpty || pageShowsEmpty) {
-            console.log('ViroMarket: Cart looks empty or shows empty state. Double-checking with server...');
+
             setTimeout(function () {
                 $(document.body).trigger('wc_fragment_refresh');
 
@@ -492,12 +484,12 @@
                             const $newContent = $(doc).find('#viromarket-cart-section-container');
 
                             if ($newContent.length && $newContent.find('.woocommerce-cart-form').length) {
-                                console.log('ViroMarket: Stale empty cart detected! Refreshing with real content.');
+
                                 $container.html($newContent.html());
                                 createViroIcons();
                                 $(document.body).trigger('wc_fragment_refresh');
                             } else {
-                                console.log('ViroMarket: Cart is indeed empty according to server.');
+
                             }
                         })
                         .catch(err => console.error('ViroMarket: Check error:', err));

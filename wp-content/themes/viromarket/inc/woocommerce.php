@@ -255,10 +255,4 @@ function viromarket_cart_count_fragments($fragments) {
 }
 add_filter('woocommerce_add_to_cart_fragments', 'viromarket_cart_count_fragments');
 
-/**
- * Force fragment refresh on every page load to ensure accuracy
- * (Handled in main.js for better control)
- */
-add_action('wp_footer', function() {
-    // Silence is golden - logic moved to JS
-}, 99);
+
