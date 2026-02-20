@@ -1,4 +1,5 @@
 <?php
+echo "<!-- FOOTER_PHP_LOADED -->";
 /**
  * The template for displaying the footer
  *
@@ -95,6 +96,24 @@
             </div>
         </div>
     </footer><!-- #colophon -->
+
+    <!-- Cart Sidebar Overlay -->
+    <div class="mobile-menu-overlay overlay-right" id="cartOverlay">
+        <div class="mobile-menu-content">
+            <div class="mobile-menu-header">
+                <h3 class="section-title"><?php _e('Shopping Cart', 'viromarket'); ?></h3>
+                <button class="close-menu-container" id="closeCart">
+                    <span><?php _e('Close', 'viromarket'); ?></span>
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="cart-overlay-body">
+                <div class="widget_shopping_cart_content">
+                    <?php woocommerce_mini_cart(); ?>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div><!-- #page -->
 

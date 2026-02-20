@@ -67,23 +67,36 @@ function viromarket_add_lazy_loading($attr) {
 add_filter('wp_get_attachment_image_attributes', 'viromarket_add_lazy_loading');
 
 /**
- * Optimize WooCommerce scripts
+ * Force wc-cart-fragments to load on ALL pages so the navbar cart count
+ * always stays in sync after add/remove actions.
  */
-function viromarket_optimize_woocommerce_scripts() {
-    // Remove WooCommerce scripts on non-shop pages
-    if (!is_woocommerce() && !is_cart() && !is_checkout() && !is_account_page()) {
-        // Dequeue WooCommerce styles
-        wp_dequeue_style('woocommerce-general');
-        wp_dequeue_style('woocommerce-layout');
-        wp_dequeue_style('woocommerce-smallscreen');
-        
-        // Dequeue WooCommerce scripts
-        wp_dequeue_script('wc-cart-fragments');
-        wp_dequeue_script('woocommerce');
-        wp_dequeue_script('wc-add-to-cart');
+/**
+ * Force wc-cart-fragments to load on ALL pages so the navbar cart count
+ * always stays in sync after add/remove actions.
+ */
+function viromarket_force_cart_fragments() {
+    if ( class_exists('WooCommerce') ) {
+        wp_enqueue_script('wc-cart-fragments');
+
+        // Cart page dedicated stylesheet
+        // Check by is_cart(), ID 8, or slug
+        $queried_id = get_queried_object_id();
+        $is_cart_page = is_cart() || $queried_id == 8;
+
+        if ( $is_cart_page || is_checkout() || (is_page() && strpos(get_post_field('post_name', $queried_id), 'cart') !== false) ) {
+            $css_path = VIROMARKET_THEME_DIR . '/assets/css/cart.css';
+            $version = file_exists($css_path) ? filemtime($css_path) : VIROMARKET_VERSION;
+            
+            wp_enqueue_style(
+                'viromarket-cart',
+                VIROMARKET_THEME_URI . '/assets/css/cart.css',
+                array(),
+                $version
+            );
+        }
     }
 }
-add_action('wp_enqueue_scripts', 'viromarket_optimize_woocommerce_scripts', 99);
+add_action('wp_enqueue_scripts', 'viromarket_force_cart_fragments', 999);
 
 /**
  * Remove query strings from static resources

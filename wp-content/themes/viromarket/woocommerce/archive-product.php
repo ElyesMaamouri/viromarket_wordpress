@@ -26,7 +26,16 @@ $max_price_slider = ($max_price_db > 0) ? $max_price_db : 1000;
         
         <!-- Breadcrumbs -->
         <nav class="breadcrumbs" aria-label="Breadcrumb">
-            <?php woocommerce_breadcrumb(); ?>
+            <?php 
+            if ( is_shop() && ! is_search() && ! is_product_category() && ! is_product_tag() ) {
+                echo '<ol>';
+                echo '<li><a href="' . esc_url( home_url( '/' ) ) . '">' . __( 'Home', 'viromarket' ) . '</a></li>';
+                echo '<li>' . __( 'Shop', 'viromarket' ) . '</li>';
+                echo '</ol>';
+            } else {
+                woocommerce_breadcrumb(); 
+            }
+            ?>
         </nav>
 
         <!-- Page Header -->
@@ -34,6 +43,23 @@ $max_price_slider = ($max_price_db > 0) ? $max_price_db : 1000;
             <?php if ( apply_filters( 'woocommerce_show_page_title', true ) ) : ?>
                 <h1 class="page-title"><?php woocommerce_page_title(); ?></h1>
             <?php endif; ?>
+            
+            <div class="page-description">
+                <?php 
+                do_action( 'woocommerce_archive_description' ); 
+                
+                // Show shop page content if on main shop page
+                if ( is_shop() && ! is_search() && ! is_product_category() ) {
+                    $shop_page_id = wc_get_page_id( 'shop' );
+                    if ( $shop_page_id ) {
+                        $shop_page = get_post( $shop_page_id );
+                        if ( $shop_page && ! empty( $shop_page->post_content ) ) {
+                            echo '<div class="shop-content">' . apply_filters( 'the_content', $shop_page->post_content ) . '</div>';
+                        }
+                    }
+                }
+                ?>
+            </div>
         </div>
 
         <!-- Mobile Filter Overlay -->
@@ -86,7 +112,7 @@ $max_price_slider = ($max_price_db > 0) ? $max_price_db : 1000;
                             <label class="filter-item">
                                 <input type="checkbox" class="category-filter-checkbox" name="category" value="<?php echo esc_attr( $category->slug ); ?>" <?php checked( $is_active ); ?>>
                                 <span class="item-label"><?php echo esc_html( $category->name ); ?></span>
-                                <span class="count">(<?php echo esc_html( $category->count ); ?>)</span>
+                                <span class="item-count">(<?php echo esc_html( $category->count ); ?>)</span>
                             </label>
                         <?php endforeach; ?>
 
@@ -98,7 +124,7 @@ $max_price_slider = ($max_price_db > 0) ? $max_price_db : 1000;
                                     <label class="filter-item">
                                         <input type="checkbox" class="category-filter-checkbox" name="category" value="<?php echo esc_attr( $category->slug ); ?>" <?php checked( $is_active ); ?>>
                                         <span class="item-label"><?php echo esc_html( $category->name ); ?></span>
-                                        <span class="count">(<?php echo esc_html( $category->count ); ?>)</span>
+                                        <span class="item-count">(<?php echo esc_html( $category->count ); ?>)</span>
                                     </label>
                                 <?php endforeach; ?>
                             </div>
@@ -213,11 +239,11 @@ $max_price_slider = ($max_price_db > 0) ? $max_price_db : 1000;
                 </div>
                 <?php endif; ?>
 
-                <div class="filter-actions-sidebar" style="margin-top: 25px; display: flex; flex-direction: column; gap: 10px;">
-                    <button type="button" class="btn-apply-price" id="applyPriceFilter" style="width: 100%;">
+                <div class="filter-actions-sidebar">
+                    <button type="button" class="btn-apply-price" id="applyPriceFilter">
                         <?php _e( 'Apply Filter', 'viromarket' ); ?>
                     </button>
-                    <a href="<?php echo esc_url( $shop_link ); ?>" class="btn-reset-filters" style="width: 100%; text-align: center; justify-content: center;">
+                    <a href="<?php echo esc_url( $shop_link ); ?>" class="btn-reset-filters">
                         <i data-lucide="refresh-cw"></i>
                         <?php _e( 'Reset Filters', 'viromarket' ); ?>
                     </a>
@@ -293,6 +319,11 @@ $max_price_slider = ($max_price_db > 0) ? $max_price_db : 1000;
             <!-- Main Products Section -->
             <section class="products-grid-section">
                 
+                <!-- Notices Area -->
+                <div class="woocommerce-notices-wrapper">
+                    <?php wc_print_notices(); ?>
+                </div>
+
                 <!-- Toolbar -->
                 <div class="products-toolbar">
                     <div class="toolbar-left">
@@ -300,6 +331,7 @@ $max_price_slider = ($max_price_db > 0) ? $max_price_db : 1000;
                             <span class="sort-label"><?php _e( 'Sort By:', 'viromarket' ); ?></span>
                             <?php
                             remove_action( 'woocommerce_before_shop_loop', 'woocommerce_result_count', 20 );
+                            remove_action( 'woocommerce_before_shop_loop', 'wc_print_notices', 10 );
                             do_action( 'woocommerce_before_shop_loop' );
                             ?>
                         </div>

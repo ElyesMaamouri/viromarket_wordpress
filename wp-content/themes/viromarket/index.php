@@ -1,4 +1,5 @@
 <?php
+echo "<!-- INDEX_PHP_LOADED -->";
 /**
  * The main template file
  *

@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- HEADER_PHP_LOADED -->
 <html <?php language_attributes(); ?>>
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
@@ -64,7 +65,9 @@
             <!-- User Actions -->
             <div class="user-actions">
                 <?php viromarket_user_account(); ?>
-                <?php viromarket_cart_count(); ?>
+                <div id="openCart">
+                    <?php viromarket_cart_count(); ?>
+                </div>
             </div>
         </div>
 
@@ -186,8 +189,11 @@
             <i data-lucide="user"></i>
             <span><?php _e('Profile', 'viromarket'); ?></span>
         </a>
-        <a href="<?php echo esc_url(wc_get_cart_url()); ?>" class="nav-item">
-            <i data-lucide="shopping-cart"></i>
+        <a href="javascript:void(0)" class="nav-item" id="openCartMobile">
+            <div class="nav-icon-badge">
+                <i data-lucide="shopping-cart"></i>
+                <span class="badge cart-count"><?php echo WC()->cart->get_cart_contents_count(); ?></span>
+            </div>
             <span><?php _e('Cart', 'viromarket'); ?></span>
         </a>
         <a href="javascript:void(0)" class="nav-item" id="openPagesMobile">

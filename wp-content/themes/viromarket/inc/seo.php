@@ -18,6 +18,10 @@ function viromarket_product_schema() {
     }
     
     global $product;
+
+    if (!is_a($product, 'WC_Product')) {
+        return;
+    }
     
     $schema = array(
         '@context' => 'https://schema.org/',

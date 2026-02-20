@@ -110,13 +110,26 @@ function viromarket_scripts() {
         VIROMARKET_VERSION
     );
     
-    // Pagination styles
-    wp_enqueue_style(
-        'viromarket-pagination',
-        VIROMARKET_THEME_URI . '/assets/css/pagination.css',
-        array('viromarket-main'),
-        VIROMARKET_VERSION
-    );
+    // Homepage specific styles
+    if ( is_front_page() ) {
+        wp_enqueue_style(
+            'viromarket-home',
+            VIROMARKET_THEME_URI . '/assets/css/home.css',
+            array('viromarket-main'),
+            VIROMARKET_VERSION
+        );
+    }
+    
+    // WooCommerce & Shop styles (Modularized)
+    // Loaded on shop pages OR front page (since front page has product cards) OR wishlist page
+    if ( class_exists( 'WooCommerce' ) && ( is_front_page() || is_shop() || is_product_category() || is_product_tag() || is_product() || is_cart() || is_checkout() || is_account_page() || is_page('wishlist') ) ) {
+        wp_enqueue_style(
+            'viromarket-shop',
+            VIROMARKET_THEME_URI . '/assets/css/shop.css',
+            array('viromarket-main'),
+            VIROMARKET_VERSION
+        );
+    }
     
     // Lucide Icons
     wp_enqueue_script(

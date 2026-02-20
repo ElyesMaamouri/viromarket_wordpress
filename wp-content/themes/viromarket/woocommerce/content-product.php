@@ -116,19 +116,27 @@ if ( empty( $product ) || ! $product->is_visible() ) {
                 <i data-lucide="heart"></i>
             </button>
             <?php
-            echo apply_filters(
-                'woocommerce_loop_add_to_cart_link',
-                sprintf(
-                    '<a href="%s" data-quantity="%s" class="%s btn-add-cart" %s><i data-lucide="shopping-cart"></i><span>%s</span></a>',
+            // Build the AJAX-compatible add to cart link directly
+            // (bypassing woocommerce_loop_add_to_cart_link filter which can strip our classes)
+            if ( $product->is_type( 'simple' ) && $product->is_purchasable() && $product->is_in_stock() ) {
+                printf(
+                    '<a href="%s" data-quantity="1" data-product_id="%s" data-product_sku="%s" aria-label="%s" class="add_to_cart_button ajax_add_to_cart btn-add-cart">
+                        <i data-lucide="shopping-cart"></i><span>%s</span>
+                    </a>',
                     esc_url( $product->add_to_cart_url() ),
-                    esc_attr( isset( $args['quantity'] ) ? $args['quantity'] : 1 ),
-                    esc_attr( isset( $args['class'] ) ? $args['class'] : 'button' ),
-                    isset( $args['attributes'] ) ? wc_implode_html_attributes( $args['attributes'] ) : '',
+                    esc_attr( $product->get_id() ),
+                    esc_attr( $product->get_sku() ),
+                    esc_attr( $product->add_to_cart_description() ),
                     esc_html( $product->add_to_cart_text() )
-                ),
-                $product,
-                $args
-            );
+                );
+            } else {
+                // For variable/external products, use a regular link to the product page
+                printf(
+                    '<a href="%s" class="btn-add-cart"><i data-lucide="shopping-cart"></i><span>%s</span></a>',
+                    esc_url( get_permalink( $product->get_id() ) ),
+                    esc_html( $product->add_to_cart_text() )
+                );
+            }
             ?>
         </div>
     </div>

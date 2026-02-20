@@ -94,15 +94,6 @@ add_filter('woocommerce_product_add_to_cart_text', 'viromarket_add_to_cart_text'
 add_filter('woocommerce_product_single_add_to_cart_text', 'viromarket_add_to_cart_text', 10, 2);
 
 /**
- * Support du panier AJAX
- */
-function viromarket_ajax_add_to_cart_handler() {
-    WC_AJAX::get_refreshed_fragments();
-}
-add_action('wp_ajax_viromarket_add_to_cart', 'viromarket_ajax_add_to_cart_handler');
-add_action('wp_ajax_nopriv_viromarket_add_to_cart', 'viromarket_ajax_add_to_cart_handler');
-
-/**
  * Support multiple categories and attributes in the URL
  */
 function viromarket_handle_sidebar_filters( $query ) {
@@ -165,10 +156,52 @@ function viromarket_handle_sidebar_filters( $query ) {
 add_action( 'pre_get_posts', 'viromarket_handle_sidebar_filters' );
 
 /**
- * Mettre à jour le compteur du panier
+ * Mettre à jour le compteur du panier via AJAX
  */
 function viromarket_cart_count_fragments($fragments) {
-    $fragments['span.cart-count'] = '<span class="cart-count">' . WC()->cart->get_cart_contents_count() . '</span>';
+    // Top bar cart fragment - Include the ID wrapper
+    ob_start();
+    ?>
+    <div id="openCart">
+        <?php viromarket_cart_count(); ?>
+    </div>
+    <?php
+    $fragments['#openCart'] = ob_get_clean();
+
+    // Mobile bar cart fragment - Include the ID wrapper
+    ob_start();
+    ?>
+    <div id="openCartMobile">
+        <div class="open-pages">
+            <i data-lucide="shopping-cart"></i>
+            <span class="badge cart-count"><?php echo WC()->cart->get_cart_contents_count(); ?></span>
+        </div>
+    </div>
+    <?php
+    $fragments['#openCartMobile'] = ob_get_clean();
+
+    // Mini cart content fragment
+    ob_start();
+    ?>
+    <div class="widget_shopping_cart_content">
+        <?php woocommerce_mini_cart(); ?>
+    </div>
+    <?php
+    $fragments['div.widget_shopping_cart_content'] = ob_get_clean();
+    
     return $fragments;
 }
 add_filter('woocommerce_add_to_cart_fragments', 'viromarket_cart_count_fragments');
+
+/**
+ * Force fragment refresh on every page load to ensure accuracy
+ */
+add_action('wp_footer', function() {
+    ?>
+    <script type="text/javascript">
+        jQuery(function($) {
+            $(document.body).trigger('wc_fragment_refresh');
+        });
+    </script>
+    <?php
+}, 99);

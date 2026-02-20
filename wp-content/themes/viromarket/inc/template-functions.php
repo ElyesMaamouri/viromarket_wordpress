@@ -10,6 +10,25 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Output a Lucide icon element.
+ *
+ * Lucide icons are rendered via the lucide.createIcons() JS call
+ * already present in the theme's footer scripts.
+ *
+ * @param  string $name   Lucide icon name (e.g. 'trash-2', 'arrow-right')
+ * @param  int    $size   Icon size in px (applied via inline style, optional)
+ * @return string         HTML string — safe for wp_kses_post output
+ */
+function viromarket_icon( string $name, int $size = 20 ): string {
+    return sprintf(
+        '<i data-lucide="%s" style="width:%dpx;height:%dpx;" aria-hidden="true"></i>',
+        esc_attr( $name ),
+        $size,
+        $size
+    );
+}
+
+/**
  * Display site logo
  */
 function viromarket_site_logo() {
